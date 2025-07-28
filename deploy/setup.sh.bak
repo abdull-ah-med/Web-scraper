@@ -1,0 +1,45 @@
+#!/bin/bash
+
+# AI University Scraper - Post-Deployment Setup Script
+# Run this after successful Railway deployment
+
+echo "🚀 AI University Scraper - Post-Deployment Setup"
+echo "================================================"
+
+# Check if environment variables are set
+if [ -z "$CLAUDE_API_KEY" ]; then
+    echo "❌ CLAUDE_API_KEY not set"
+    echo "   Please set this in Railway dashboard: Variables tab"
+    exit 1
+fi
+
+if [ -z "$MONGODB_URI" ]; then
+    echo "❌ MONGODB_URI not set"
+    echo "   Please set this in Railway dashboard: Variables tab"
+    exit 1
+fi
+
+# Wait for MongoDB connection
+echo "⏳ Waiting for database connection..."
+sleep 10
+
+# Seed database with Pakistani universities
+echo "🌱 Seeding database with Pakistani universities..."
+cd backend
+node "../data/seed-universities.js" --sample-data
+
+if [ $? -eq 0 ]; then
+    echo "✅ Database seeded successfully!"
+else
+    echo "❌ Database seeding failed"
+    echo "   You can run this manually later with:"
+    echo "   node data/seed-universities.js --sample-data"
+fi
+
+echo ""
+echo "🎉 Setup completed!"
+echo "📚 Your API is available at: https://your-app-name.up.railway.app"
+echo "💡 Test endpoints:"
+echo "   - Health: https://your-app-name.up.railway.app/health"
+echo "   - API: https://your-app-name.up.railway.app/api"
+echo "   - Universities: https://your-app-name.up.railway.app/api/universities" 

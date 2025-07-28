@@ -1,4 +1,3 @@
-# Web-Scrapper
 # 🎓 AI University Web Scraper - Pakistan
 
 An intelligent, AI-powered web scraper designed to extract comprehensive university data from Pakistani institutions using Claude AI, rotating proxies, and advanced anti-detection techniques.

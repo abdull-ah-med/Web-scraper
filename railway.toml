@@ -1,0 +1,12 @@
+[build]
+  builder = "NIXPACKS"
+
+[deploy]
+  startCommand = "cd backend && npm start"
+  healthcheck = "/health"
+  healthcheckTimeout = 300
+  healthcheckInterval = 300
+
+[variables]
+  NODE_ENV = "production"
+  PORT = "3000" 

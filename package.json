@@ -1,0 +1,32 @@
+{
+  "name": "ai-university-scraper",
+  "version": "1.0.0",
+  "description": "AI-powered university data scraper for Pakistani institutions",
+  "main": "backend/server.js",
+  "scripts": {
+    "start": "cd backend && npm start",
+    "build": "cd backend && npm install && cd ../scraper && pip install -r requirements.txt",
+    "dev": "cd backend && npm run dev",
+    "seed": "cd backend && node ../data/seed-universities.js",
+    "test": "cd backend && npm test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/ai-university-scraper.git"
+  },
+  "keywords": [
+    "web-scraping",
+    "ai",
+    "claude-api",
+    "universities",
+    "pakistan",
+    "node.js",
+    "python"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  }
+} 
