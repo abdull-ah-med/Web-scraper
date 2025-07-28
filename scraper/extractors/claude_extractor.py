@@ -76,23 +76,32 @@ class ClaudeDataExtractor:
         cleaned_html = self._clean_html_content(html_content)
         full_prompt = prompt.format(html_content=cleaned_html)
         
+        # Debug logging
+        if settings.LOG_LEVEL.upper() == 'DEBUG':
+            self.logger.debug(f"Making Claude request with prompt length: {len(full_prompt)}")
+            self.logger.debug(f"API key present: {bool(settings.CLAUDE_API_KEY)}")
+        
         for attempt in range(self.max_retries):
             try:
                 self._rate_limit()
                 
-                response = self.client.messages.create(
-                    model="claude-3-7-sonnet-20250219",
-                    max_tokens=self.max_tokens,
+                # Debug log before API call
+                if settings.LOG_LEVEL.upper() == 'DEBUG':
+                    self.logger.debug(f"Attempt {attempt + 1}: Calling Claude API...")
+                
+                # Use completions API for anthropic 0.7.8
+                response = self.client.completions.create(
+                    model="claude-v1",
+                    prompt=f"{self.client.HUMAN_PROMPT} {full_prompt} {self.client.AI_PROMPT}",
+                    max_tokens_to_sample=self.max_tokens,
                     temperature=0.1,  # Low temperature for consistent structured output
-                    messages=[
-                        {
-                            "role": "user",
-                            "content": full_prompt
-                        }
-                    ]
                 )
                 
-                return response.content[0].text
+                # Debug log after API call
+                if settings.LOG_LEVEL.upper() == 'DEBUG':
+                    self.logger.debug(f"Claude API response received, length: {len(response.completion) if response.completion else 0}")
+                
+                return response.completion
                 
             except RateLimitError as e:
                 self.logger.warning(f"Rate limit hit, waiting {self.retry_delay * (attempt + 1)} seconds...")
@@ -121,33 +130,55 @@ class ClaudeDataExtractor:
             return []
         
         try:
-            # Clean the response - remove any markdown formatting
+            # Log raw response for debugging
+            if settings.LOG_LEVEL.upper() == 'DEBUG':
+                self.logger.debug(f"Raw Claude response for {data_type}: {response[:500]}...")
+            
+            # Clean up common JSON formatting issues
             cleaned_response = response.strip()
+            
+            # Remove markdown code blocks if present
             if cleaned_response.startswith('```json'):
                 cleaned_response = cleaned_response[7:]
             if cleaned_response.endswith('```'):
                 cleaned_response = cleaned_response[:-3]
+            
+            # Remove extra whitespace and newlines
             cleaned_response = cleaned_response.strip()
             
-            # Parse JSON
+            # Try to find JSON array in the response
+            start_idx = cleaned_response.find('[')
+            end_idx = cleaned_response.rfind(']')
+            
+            if start_idx != -1 and end_idx != -1 and end_idx > start_idx:
+                json_str = cleaned_response[start_idx:end_idx + 1]
+                parsed_data = json.loads(json_str)
+                
+                if isinstance(parsed_data, list):
+                    self.logger.info(f"Successfully parsed {len(parsed_data)} {data_type} items")
+                    return parsed_data
+            
+            # If no valid JSON array found, try parsing the whole response
             parsed_data = json.loads(cleaned_response)
-            
-            # Ensure it's a list
-            if isinstance(parsed_data, dict):
-                parsed_data = [parsed_data]
-            elif not isinstance(parsed_data, list):
-                self.logger.error(f"Invalid response format for {data_type}: {type(parsed_data)}")
+            if isinstance(parsed_data, list):
+                return parsed_data
+            elif isinstance(parsed_data, dict):
+                return [parsed_data]  # Wrap single item in list
+            else:
+                self.logger.warning(f"Unexpected JSON structure for {data_type}: {type(parsed_data)}")
                 return []
-            
-            self.logger.info(f"Successfully parsed {len(parsed_data)} {data_type} entries")
-            return parsed_data
-            
+                
         except json.JSONDecodeError as e:
             self.logger.error(f"JSON parsing error for {data_type}: {e}")
-            self.logger.debug(f"Raw response: {response[:500]}...")
+            self.logger.error(f"Raw response that failed to parse: {response[:1000]}")
+            
+            # Save failed response for debugging
+            with open(f"logs/failed_claude_response_{data_type}.txt", "w") as f:
+                f.write(f"Error: {e}\n\nRaw response:\n{response}")
+            
             return []
         except Exception as e:
-            self.logger.error(f"Unexpected error parsing {data_type}: {e}")
+            self.logger.error(f"Unexpected error parsing {data_type} response: {e}")
             return []
     
     def extract_admission_dates(self, html_content: str, url: str) -> List[Dict]:

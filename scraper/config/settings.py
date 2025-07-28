@@ -8,7 +8,7 @@ class Settings:
     """Configuration settings for the university scraper"""
     
     # API Keys
-    CLAUDE_API_KEY = os.getenv('CLAUDE_API_KEY', '')
+    CLAUDE_API_KEY = os.getenv('CLAUDE_API_KEY') or os.getenv('ANTHROPIC_API_KEY', '')
     
     # Database
     MONGODB_URI = os.getenv('MONGODB_URI', 'mongodb://localhost:27017/university_scraper')

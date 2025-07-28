@@ -16,6 +16,15 @@ import asyncio
 # Add the scraper directory to Python path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+# -------------------------------------------------------------
+# Ensure --no-proxies flag disables proxy loading **before** any
+# scraper modules (which import the proxy manager) are loaded.
+# -------------------------------------------------------------
+
+if '--no-proxies' in sys.argv:
+    # Environment variable is read inside config.settings at import time.
+    os.environ['USE_PROXIES'] = 'false'
+
 from config.settings import settings
 from core.scraper_engine import scraper_engine
 from core.proxy_manager import proxy_manager

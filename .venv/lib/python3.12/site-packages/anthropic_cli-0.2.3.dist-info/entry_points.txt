@@ -1,0 +1,2 @@
+[console_scripts]
+anthropic-cli = cli.cli:main
