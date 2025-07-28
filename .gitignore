@@ -89,9 +89,17 @@ jspm_packages/
 # PyCharm
 .idea/
 
-# Data files (optional - uncomment if you don't want to commit scraped data)
-# data/scraped/
-# data/backups/
+# Python Virtual Environment
+.venv/
+venv/
+env/
+ENV/
+
+# Data files - Scraped JSON files with timestamps (these are generated data)
+data/*_*.json
+
+# Keep seed files but ignore scraped data
+!data/seed-universities.js
 
 # Temporary files
 tmp/
