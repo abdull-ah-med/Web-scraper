@@ -965,11 +965,4 @@ npm run test:integration
 - Update documentation
 - Add logging for new features
 
-## 📄 License
-
-This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
-
-
----
-
 **Built with my curiosity**
