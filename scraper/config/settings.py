@@ -2,30 +2,23 @@ import os
 import logging
 from dotenv import load_dotenv
 
-# Load environment variables
 load_dotenv()
 
 class Settings:
-    """Configuration settings for the university scraper"""
     
-    # API Keys
     CLAUDE_API_KEY = os.getenv('CLAUDE_API_KEY') or os.getenv('ANTHROPIC_API_KEY', '')
     
-    # Database
     MONGODB_URI = os.getenv('MONGODB_URI', 'mongodb://localhost:27017/university_scraper')
     
-    # Scraper Configuration
     SCRAPER_DELAY_MIN = int(os.getenv('SCRAPER_DELAY_MIN', '2'))
     SCRAPER_DELAY_MAX = int(os.getenv('SCRAPER_DELAY_MAX', '5'))
     SCRAPER_CONCURRENT_REQUESTS = int(os.getenv('SCRAPER_CONCURRENT_REQUESTS', '1'))
     SCRAPER_TIMEOUT = int(os.getenv('SCRAPER_TIMEOUT', '30'))
     
-    # Proxy Configuration
     USE_PROXIES = os.getenv('USE_PROXIES', 'true').lower() == 'true'
     PROXY_ROTATION_ENABLED = os.getenv('PROXY_ROTATION_ENABLED', 'true').lower() == 'true'
     PROXY_TEST_URL = os.getenv('PROXY_TEST_URL', 'http://httpbin.org/ip')
     
-    # User Agent Settings
     USER_AGENT_ROTATION = True
     CUSTOM_USER_AGENTS = [
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
@@ -33,14 +26,12 @@ class Settings:
         'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
     ]
     
-    # Free Proxy Sources
     FREE_PROXY_SOURCES = [
         'https://www.proxy-list.download/api/v1/get?type=http',
         'https://api.proxyscrape.com/v2/?request=get&protocol=http&timeout=5000&country=all',
         'https://raw.githubusercontent.com/TheSpeedX/PROXY-List/master/http.txt',
     ]
     
-    # Pakistani Universities - Initial seed data
     PAKISTANI_UNIVERSITIES = [
         {
             'name': 'University of Punjab',
@@ -92,11 +83,9 @@ class Settings:
         }
     ]
     
-    # Logging
     LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO')
     LOG_FILE = os.getenv('LOG_FILE', '../logs/scraper.log')
     
-    # Data extraction prompts for Claude API
     CLAUDE_SYSTEM_PROMPT = """You are a data extraction expert. Your task is to analyze the provided HTML content from a university website and extract specific information based on the user's request. The output must be a single, valid, minified JSON array. Do not include any explanatory text, apologies, or markdown formatting. If no relevant information is found, return an empty JSON array []."""
     CLAUDE_PROMPTS = {
         'admission_dates': """
@@ -198,5 +187,4 @@ class Settings:
         """
     }
 
-# Create global settings instance
 settings = Settings() 

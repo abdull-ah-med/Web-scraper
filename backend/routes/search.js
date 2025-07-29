@@ -5,7 +5,6 @@ const logger = require('../services/logger');
 
 const router = express.Router();
 
-// Helper function for pagination
 const buildPaginationOptions = (queryParams) => {
   const page = parseInt(queryParams.page) || 1;
   const limit = Math.min(parseInt(queryParams.limit) || 20, 100);
@@ -14,17 +13,12 @@ const buildPaginationOptions = (queryParams) => {
   return { page, limit, skip };
 };
 
-// @route   GET /api/search/universities
-// @desc    Search universities by various criteria
-// @access  Public
 router.get('/universities', catchAsync(async (req, res) => {
   const { q, city, type, country, min_completeness } = req.query;
   const { page, limit, skip } = buildPaginationOptions(req.query);
   
-  // Build search query
   const searchQuery = { is_active: true };
   
-  // Text search
   if (q) {
     searchQuery.$or = [
       { name: { $regex: q, $options: 'i' } },

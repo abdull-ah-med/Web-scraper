@@ -2,13 +2,11 @@ const winston = require('winston');
 const path = require('path');
 const fs = require('fs');
 
-// Ensure logs directory exists
 const logsDir = path.join(__dirname, '../../logs');
 if (!fs.existsSync(logsDir)) {
   fs.mkdirSync(logsDir, { recursive: true });
 }
 
-// Define log levels
 const logLevels = {
   error: 0,
   warn: 1,
@@ -17,7 +15,6 @@ const logLevels = {
   debug: 4,
 };
 
-// Define log colors
 const logColors = {
   error: 'red',
   warn: 'yellow',
@@ -26,10 +23,8 @@ const logColors = {
   debug: 'white',
 };
 
-// Add colors to winston
 winston.addColors(logColors);
 
-// Create custom format
 const logFormat = winston.format.combine(
   winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
   winston.format.errors({ stack: true }),
@@ -39,7 +34,6 @@ const logFormat = winston.format.combine(
     
     let logMessage = `${timestamp} [${level.toUpperCase()}]: ${message}`;
     
-    // Add metadata if present
     if (Object.keys(meta).length > 0) {
       logMessage += ` ${JSON.stringify(meta)}`;
     }

@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
 
-// Sub-schemas for nested data
 const admissionDateSchema = new mongoose.Schema({
   program: {
     type: String,

@@ -15,20 +15,17 @@ from core.proxy_manager import proxy_manager, ProxyInfo
 from extractors.claude_extractor import claude_extractor
 
 class UniversityScraperEngine:
-    """Advanced web scraper with anti-detection and AI extraction capabilities"""
     
     def __init__(self):
         self.session = self._create_session()
         self.user_agent = UserAgent()
         self.logger = self._setup_logger()
         
-        # Anti-detection settings
         self.request_count = 0
         self.session_start_time = datetime.now()
         self.max_requests_per_session = 100
-        self.session_duration_limit = 3600  # 1 hour
+        self.session_duration_limit = 3600
         
-        # Scraping statistics
         self.stats = {
             'total_requests': 0,
             'successful_requests': 0,
@@ -39,7 +36,6 @@ class UniversityScraperEngine:
         }
         
     def _setup_logger(self) -> logging.Logger:
-        """Setup logging for scraper engine"""
         logger = logging.getLogger('ScraperEngine')
         logger.setLevel(logging.INFO)
         

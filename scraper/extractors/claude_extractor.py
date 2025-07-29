@@ -9,24 +9,20 @@ from anthropic import Anthropic, APIError, RateLimitError, HUMAN_PROMPT, AI_PROM
 from config.settings import settings
 
 class ClaudeDataExtractor:
-    """Claude AI-powered data extractor for university information"""
     
     def __init__(self):
         self.client = Anthropic(api_key=settings.CLAUDE_API_KEY)
         self.logger = self._setup_logger()
         
-        # Rate limiting
         self.last_request_time = 0
-        self.min_request_interval = 1.0  # Minimum 1 second between requests
+        self.min_request_interval = 1.0
         self.max_retries = 3
-        self.retry_delay = 5  # seconds
+        self.retry_delay = 5
         
-        # Token management
         self.max_tokens = 4000
-        self.max_input_length = 15000  # characters
+        self.max_input_length = 15000
         
     def _setup_logger(self) -> logging.Logger:
-        """Setup logging for Claude extractor"""
         logger = logging.getLogger('ClaudeExtractor')
         logger.setLevel(logging.INFO)
         

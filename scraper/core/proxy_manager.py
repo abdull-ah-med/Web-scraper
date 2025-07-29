@@ -39,14 +39,12 @@ class ProxyInfo:
         return f"{self.protocol}://{self.host}:{self.port}"
 
     def to_dict(self) -> Dict[str, str]:
-        """Convert to requests-compatible proxy dict"""
         return {
             'http': self.proxy_url,
             'https': self.proxy_url
         }
 
 class ProxyRotationManager:
-    """Advanced proxy rotation manager with health checking and failover"""
     
     def __init__(self):
         self.proxies: List[ProxyInfo] = []
@@ -57,13 +55,11 @@ class ProxyRotationManager:
         self.logger = self._setup_logger()
         self._initialized = False
         
-        # Configuration
         self.max_failures = 3
-        self.health_check_interval = 300  # 5 minutes
+        self.health_check_interval = 300
         self.proxy_timeout = 10
         self.min_success_rate = 60
         
-        # Only log that we're ready to initialize proxies when needed
         if settings.USE_PROXIES:
             self.logger.info("Proxy manager initialized - proxies will be loaded when first needed")
         else:

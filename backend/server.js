@@ -8,42 +8,35 @@ const morgan = require('morgan');
 const path = require('path');
 require('dotenv').config();
 
-// Import routes
 const universityRoutes = require('./routes/universities');
 const searchRoutes = require('./routes/search');
 const scrapeRoutes = require('./routes/scrape');
 const statsRoutes = require('./routes/stats');
 
-// Import middleware
 const { globalErrorHandler } = require('./middleware/errorHandler');
 const logger = require('./services/logger');
 
 const app = express();
 
-// Environment variables with defaults
 const PORT = process.env.PORT || 3000;
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/university_scraper';
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
-// Verbose startup configuration log to help diagnose crashes
 logger.info('Server startup configuration', { PORT, MONGODB_URI, NODE_ENV });
 
-// Trust proxy for accurate IP addresses
 app.set('trust proxy', 1);
 
-// Rate limiting
 const limiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100, // limit each IP to 100 requests per windowMs
+  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
+  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100,
   message: {
     error: 'Too many requests from this IP, please try again later.',
     retryAfter: Math.ceil((parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000) / 1000)
   },
-  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 
-// Security middleware
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
@@ -56,10 +49,8 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false
 }));
 
-// CORS configuration
 const corsOptions = {
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
     
     const allowedOrigins = [
@@ -77,29 +68,21 @@ const corsOptions = {
     }
   },
   credentials: true,
-  optionsSuccessStatus: 200 // Support legacy browsers
+  optionsSuccessStatus: 200
 };
 
 app.use(cors(corsOptions));
-
-// Compression middleware
 app.use(compression());
-
-// Apply rate limiting to all requests
 app.use(limiter);
-
-// Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Logging middleware
 if (NODE_ENV === 'production') {
   app.use(morgan('combined', { stream: { write: (message) => logger.info(message.trim()) } }));
 } else {
   app.use(morgan('dev'));
 }
 
-// Health check endpoint (before other routes)
 app.get('/health', (req, res) => {
   res.status(200).json({
     status: 'OK',
@@ -111,13 +94,11 @@ app.get('/health', (req, res) => {
   });
 });
 
-// API Routes
 app.use('/api/universities', universityRoutes);
 app.use('/api/search', searchRoutes);
 app.use('/api/scrape', scrapeRoutes);
 app.use('/api/stats', statsRoutes);
 
-// API documentation endpoint
 app.get('/api', (req, res) => {
   res.json({
     message: 'AI University Web Scraper API',
@@ -153,21 +134,19 @@ app.get('/api', (req, res) => {
   });
 });
 
-// Serve static files in production
 if (NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, '../frontend/build')));
   
-  // Catch all handler: send back React's index.html file for SPA routing
   app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/build/index.html'));
   });
 }
 
-// 404 handler for API routes
-app.use('/api/*', (req, res) => {
+app.use((req, res) => {
   res.status(404).json({
-    error: 'API endpoint not found',
-    message: `The endpoint ${req.method} ${req.originalUrl} does not exist`,
+    error: 'Endpoint not found',
+    method: req.method,
+    path: req.path,
     availableEndpoints: [
       'GET /api',
       'GET /api/universities',
@@ -177,6 +156,89 @@ app.use('/api/*', (req, res) => {
     ]
   });
 });
+
+app.use(globalErrorHandler);
+
+async function connectToDatabase() {
+  try {
+    await mongoose.connect(MONGODB_URI, {
+      maxPoolSize: 10,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+      bufferCommands: false,
+    });
+    
+    logger.info('Connected to MongoDB successfully');
+    
+    mongoose.connection.on('error', (err) => {
+      logger.error('MongoDB connection error:', err);
+    });
+    
+    mongoose.connection.on('disconnected', () => {
+      logger.warn('MongoDB disconnected');
+    });
+    
+    mongoose.connection.on('reconnected', () => {
+      logger.info('MongoDB reconnected');
+    });
+    
+    process.on('SIGINT', async () => {
+      logger.info('Received SIGINT, closing MongoDB connection...');
+      await mongoose.connection.close();
+      process.exit(0);
+    });
+    
+  } catch (error) {
+    logger.error('Failed to connect to MongoDB:', error);
+    console.error('Failed to connect to MongoDB:', error);
+    process.exit(1);
+  }
+}
+
+async function startServer() {
+  try {
+    await connectToDatabase();
+    
+    const server = app.listen(PORT, () => {
+      logger.info(`Server running on port ${PORT}`);
+      logger.info(`API documentation available at http://localhost:${PORT}/api`);
+      logger.info(`Health check available at http://localhost:${PORT}/health`);
+      logger.info(`Environment: ${NODE_ENV}`);
+    });
+    
+    process.on('SIGTERM', () => {
+      logger.info('Received SIGTERM, shutting down gracefully...');
+      server.close(() => {
+        logger.info('Server closed');
+        mongoose.connection.close(() => {
+          logger.info('Database connection closed');
+          process.exit(0);
+        });
+      });
+    });
+    
+  } catch (error) {
+    logger.error('Failed to start server:', error);
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
+}
+
+process.on('uncaughtException', (error) => {
+  logger.error('Uncaught Exception:', error);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  logger.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  process.exit(1);
+});
+
+if (require.main === module) {
+  startServer();
+}
+
+module.exports = app;
 
 // Global error handler (must be last)
 app.use(globalErrorHandler);

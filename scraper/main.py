@@ -1,9 +1,4 @@
 #!/usr/bin/env python3
-"""
-AI University Web Scraper - Main Entry Point
-Scrapes Pakistani universities for admission data, fees, and scholarships using Claude AI
-"""
-
 import sys
 import os
 import argparse
@@ -14,16 +9,9 @@ from datetime import datetime
 import asyncio
 from pymongo import MongoClient
 
-# Add the scraper directory to Python path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-# -------------------------------------------------------------
-# Ensure --no-proxies flag disables proxy loading **before** any
-# scraper modules (which import the proxy manager) are loaded.
-# -------------------------------------------------------------
-
 if '--no-proxies' in sys.argv:
-    # Environment variable is read inside config.settings at import time.
     os.environ['USE_PROXIES'] = 'false'
 
 from config.settings import settings
@@ -32,7 +20,6 @@ from core.proxy_manager import proxy_manager
 from extractors.claude_extractor import claude_extractor
 
 class UniversityScraperManager:
-    """Main manager for university scraping operations"""
     
     def __init__(self):
         self.logger = self._setup_logger()
@@ -40,8 +27,6 @@ class UniversityScraperManager:
         self.db_client = self._setup_database_client()
         
     def _setup_logger(self) -> logging.Logger:
-        """Setup main logger"""
-        # Ensure logs directory exists
         os.makedirs(os.path.dirname(settings.LOG_FILE), exist_ok=True)
         
         logging.basicConfig(

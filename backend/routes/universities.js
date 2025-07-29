@@ -6,7 +6,6 @@ const logger = require('../services/logger');
 
 const router = express.Router();
 
-// Validation schemas
 const createUniversitySchema = Joi.object({
   name: Joi.string().required().min(2).max(200),
   url: Joi.string().uri().required(),
@@ -42,7 +41,6 @@ const updateUniversitySchema = Joi.object({
   is_active: Joi.boolean()
 });
 
-// Helper function to build query filters
 const buildQueryFilters = (queryParams) => {
   const filters = { is_active: true };
   
