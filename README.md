@@ -174,20 +174,23 @@ http://localhost:3000/api
 ### Authentication
 Currently, no authentication is required. For production, implement JWT authentication.
 
-### Universities Endpoints
+---
 
-#### List Universities
+## 🏛️ Universities Endpoints
+
+### List All Universities
 ```http
-GET /api/universities?page=1&limit=20&city=lahore&type=public
+GET /api/universities?page=1&limit=20&city=lahore&type=public&search=engineering
 ```
 
 **Query Parameters:**
 - `page` - Page number (default: 1)
-- `limit` - Results per page (max: 100)
-- `city` - Filter by city
-- `type` - Filter by type (public/private)
-- `search` - Text search
-- `sort` - Sort fields (comma-separated)
+- `limit` - Results per page (max: 100, default: 20)
+- `city` - Filter by city (case-insensitive)
+- `type` - Filter by type (`public` or `private`)
+- `search` - Text search across name, description, keywords
+- `sort` - Sort fields: `name`, `city`, `type`, `last_scraped`, `data_completeness`
+- `order` - Sort order: `asc` or `desc` (default: `asc`)
 
 **Response:**
 ```json
@@ -197,18 +200,41 @@ GET /api/universities?page=1&limit=20&city=lahore&type=public
   "pagination": {
     "currentPage": 1,
     "totalPages": 2,
-    "totalResults": 12
+    "totalResults": 12,
+    "hasNextPage": true,
+    "hasPrevPage": false
   },
-  "data": [...]
+  "data": [
+    {
+      "_id": "68890c5297d347e45f43ce36",
+      "name": "Lahore University of Management Sciences (LUMS)",
+      "url": "https://www.lums.edu.pk",
+      "city": "Lahore",
+      "type": "private",
+      "scraping_status": "completed",
+      "last_scraped": "2025-07-29T23:16:06.769Z",
+      "data_completeness": 25,
+      "total_programs": 15
+    }
+  ]
 }
 ```
 
-#### Get University Details
+### Get University by ID
 ```http
 GET /api/universities/:id
 ```
 
-#### Create University
+**Response:** Complete university document with all scraped data.
+
+### Get University Data Only
+```http
+GET /api/universities/:id/data
+```
+
+**Response:** Just the scraped data (admission_dates, criteria, fee_structure, scholarships).
+
+### Create New University
 ```http
 POST /api/universities
 Content-Type: application/json
@@ -217,113 +243,273 @@ Content-Type: application/json
   "name": "University Name",
   "url": "https://university.edu.pk",
   "city": "Lahore",
-  "type": "public"
+  "type": "public",
+  "contact_info": {
+    "phone": "+92-xx-xxxxxxxx",
+    "email": "info@university.edu.pk",
+    "address": "University Address"
+  },
+  "programs_offered": ["Engineering", "Business", "Arts"],
+  "scraping_priority": 8
 }
 ```
 
-#### Get University Data Only
+### Update University
 ```http
-GET /api/universities/:id/data
+PUT /api/universities/:id
+Content-Type: application/json
+
+{
+  "scraping_priority": 9,
+  "is_active": true
+}
 ```
 
-### Search Endpoints
+### Delete University
+```http
+DELETE /api/universities/:id
+```
 
-#### Search Universities
+---
+
+## 🔍 Search Endpoints
+
+### Search Universities
 ```http
 GET /api/search/universities?q=engineering&city=lahore&min_completeness=50
 ```
 
-#### Search Programs
+**Query Parameters:**
+- `q` - Search query (searches name, description, keywords, programs)
+- `city` - Filter by city
+- `type` - Filter by type (`public`/`private`)
+- `country` - Filter by country (default: Pakistan)
+- `min_completeness` - Minimum data completeness percentage (0-100)
+
+### Search Admission Dates
 ```http
-GET /api/search/programs?q=computer science&type=private
+GET /api/search/admission-dates?upcoming_only=true&term=fall&program=engineering
 ```
 
-#### Search Scholarships
-```http
-GET /api/search/scholarships?renewable=true&university=LUMS
-```
+**Query Parameters:**
+- `upcoming_only` - Only future deadlines (default: false)
+- `term` - Filter by academic term (Fall, Spring, Summer)
+- `program` - Filter by program name
+- `type` - Filter by date type (`application`, `test`, `merit_list`, `fee`, `semester_start`)
+- `university` - Filter by university name
 
-#### Search Admission Dates
-```http
-GET /api/search/admission-dates?upcoming_only=true&term=fall
-```
-
-#### Search Fee Structures
-```http
-GET /api/search/fees?program=engineering&max_fee=100000
-```
-
-### Scraping Control Endpoints
-
-#### Start University Scraping
-```http
-POST /api/scrape/university/:id
-```
-
-#### Check Scraping Status
-```http
-GET /api/scrape/status/:id
-```
-
-#### Stop Scraping
-```http
-POST /api/scrape/stop/:id
-```
-
-#### Bulk Scraping
-```http
-POST /api/scrape/bulk
-Content-Type: application/json
-
+**Response:**
+```json
 {
-  "scrape_all": true,
-  "delay_between": 45,
-  "filter_by_priority": true,
-  "min_priority": 7
+  "status": "success",
+  "results": 25,
+  "data": [
+    {
+      "university": "LUMS",
+      "program": "Undergraduate Programs",
+      "deadline": "2024-12-15",
+      "term": "Fall 2025",
+      "type": "application",
+      "days_until_deadline": 139
+    }
+  ]
 }
 ```
 
-#### Get Active Processes
+### Search Admission Criteria
 ```http
-GET /api/scrape/active
+GET /api/search/criteria?program=engineering&min_marks=60
 ```
 
-#### Stop All Processes
+**Query Parameters:**
+- `program` - Filter by program name
+- `min_marks` - Filter by minimum marks requirement
+- `required_test` - Filter by required test
+- `university` - Filter by university name
+
+### Search Fee Structures
 ```http
-POST /api/scrape/stop-all
+GET /api/search/fees?program=engineering&max_fee=100000&currency=PKR
 ```
 
-### Statistics Endpoints
+**Query Parameters:**
+- `program` - Filter by program name
+- `max_fee` - Maximum fee amount
+- `min_fee` - Minimum fee amount
+- `currency` - Filter by currency (default: PKR)
+- `university` - Filter by university name
 
-#### System Overview
+### Search Scholarships
+```http
+GET /api/search/scholarships?renewable=true&university=LUMS&min_amount=50
+```
+
+**Query Parameters:**
+- `renewable` - Filter renewable scholarships (true/false)
+- `university` - Filter by university name
+- `min_amount` - Minimum scholarship amount (percentage)
+- `q` - Search in scholarship name and eligibility criteria
+
+---
+
+## 📊 Statistics & Analytics Endpoints
+
+### System Overview
 ```http
 GET /api/stats/overview
 ```
 
-#### University Statistics
-```http
-GET /api/stats/universities
+**Response:**
+```json
+{
+  "status": "success",
+  "data": {
+    "universities": {
+      "total": 12,
+      "active": 12,
+      "with_data": 8,
+      "recently_scraped": 5
+    },
+    "scraping_status": {
+      "pending": 4,
+      "completed": 7,
+      "failed": 1
+    },
+    "data_types": {
+      "admission_dates": 156,
+      "criteria": 45,
+      "fee_structure": 78,
+      "scholarships": 23
+    },
+    "avg_completeness": 62.5
+  }
+}
 ```
 
-#### Scraping Performance
+### University Statistics
 ```http
-GET /api/stats/scraping
+GET /api/stats/universities?sort_by=completeness&city=lahore
 ```
 
-#### Data Freshness
+**Query Parameters:**
+- `sort_by` - Sort by: `completeness`, `last_scraped`, `name`, `priority`
+- `city` - Filter by city
+- `type` - Filter by type
+
+### Scraping Performance
+```http
+GET /api/stats/scraping?days=30
+```
+
+**Query Parameters:**
+- `days` - Number of days to analyze (default: 7)
+
+**Response:** Success rates, average scraping time, error statistics.
+
+### Data Freshness Report
 ```http
 GET /api/stats/data-freshness
 ```
 
-#### Search Analytics
-```http
-GET /api/stats/search-analytics
-```
+**Response:** Shows how recent the data is for each university and data type.
 
-#### System Health
+### System Health
 ```http
 GET /api/stats/health
 ```
+
+**Response:** System health metrics, database status, recent errors.
+
+---
+
+## 🚀 Scraping Control Endpoints
+
+### Manual Scraping (Independent)
+**Note:** The scraper runs independently from the backend. Use these commands directly:
+
+```bash
+# Scrape single university
+cd scraper && source .venv/bin/activate
+python main.py --scrape-single "LUMS"
+
+# Scrape all universities
+python main.py --scrape-all --delay 45
+
+# Validate environment
+python main.py --validate
+```
+
+### Check Scraping Results via API
+```http
+GET /api/universities/:id/scraping-history
+```
+
+**Response:** Recent scraping attempts and their results.
+
+---
+
+## 🎯 Example API Usage
+
+### Get All Universities with Data
+```bash
+curl "http://localhost:3000/api/universities?limit=50" | jq '.data[] | select(.data_completeness > 0)'
+```
+
+### Find Engineering Programs
+```bash
+curl "http://localhost:3000/api/search/universities?q=engineering" | jq '.data[].name'
+```
+
+### Get Upcoming Admission Deadlines
+```bash
+curl "http://localhost:3000/api/search/admission-dates?upcoming_only=true" | jq '.data[] | {university, program, deadline}'
+```
+
+### Get LUMS Complete Data
+```bash
+curl "http://localhost:3000/api/universities/68890c5297d347e45f43ce36/data" | jq '.'
+```
+
+### System Health Check
+```bash
+curl "http://localhost:3000/health" | jq '.'
+```
+
+---
+
+## 📋 Response Format
+
+All API responses follow this structure:
+
+### Success Response
+```json
+{
+  "status": "success",
+  "results": 10,
+  "pagination": { /* pagination info */ },
+  "data": [ /* actual data */ ]
+}
+```
+
+### Error Response
+```json
+{
+  "status": "error",
+  "message": "Error description",
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "details": "Specific error details"
+  }
+}
+```
+
+### Status Codes
+- `200` - Success
+- `201` - Created
+- `400` - Bad Request
+- `404` - Not Found
+- `429` - Too Many Requests
+- `500` - Internal Server Error
 
 ## 🎓 Supported Universities
 
