@@ -969,28 +969,8 @@ npm run test:integration
 
 This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
 
-## 🙏 Acknowledgments
-
-- **Anthropic** for Claude AI API
-- **Pakistani Universities** for providing public information
-- **Open Source Community** for amazing tools and libraries
-- **Free Proxy Providers** for rotating proxy services
-
-## 📞 Support
-
-- **Issues**: [GitHub Issues](https://github.com/your-username/ai-university-scraper/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/your-username/ai-university-scraper/discussions)
-- **Email**: your-email@example.com
-
-## 🔄 Version History
-
-- **v1.0.0** - Initial release with full functionality
-- **v1.1.0** - Enhanced proxy rotation and error handling
-- **v1.2.0** - Advanced search and analytics features
 
 ---
 
-**Built with ❤️ for Pakistani students and educational institutions**
-
-![Footer](https://img.shields.io/badge/Made%20with-Python%20%26%20Node.js-blue?style=for-the-badge)
-![Status](https://img.shields.io/badge/Status-Production%20Ready-green?style=for-the-badge) 
+**Built with my curiosity**
+n%20Ready-green?style=for-the-badge) 
