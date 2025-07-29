@@ -198,13 +198,14 @@ class UniversityScraperManager:
     def _save_result_to_file(self, result: Dict[str, Any]):
         """Save individual scraping result to file"""
         try:
-            # Create data directory if it doesn't exist
-            os.makedirs('data', exist_ok=True)
+            # Create data directory if it doesn't exist (use root data folder)
+            data_dir = '../data'
+            os.makedirs(data_dir, exist_ok=True)
             
             # Generate filename with timestamp
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
             university_name = result.get('university_name', 'unknown').replace(' ', '_').lower()
-            filename = f"data/{university_name}_{timestamp}.json"
+            filename = f"{data_dir}/{university_name}_{timestamp}.json"
             
             with open(filename, 'w', encoding='utf-8') as f:
                 json.dump(result, f, indent=2, ensure_ascii=False, default=str)
@@ -217,10 +218,12 @@ class UniversityScraperManager:
     def _save_batch_results(self, results: List[Dict[str, Any]]):
         """Save batch scraping results"""
         try:
-            os.makedirs('data', exist_ok=True)
+            # Use root data directory
+            data_dir = '../data'
+            os.makedirs(data_dir, exist_ok=True)
             
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            filename = f"data/batch_scrape_{timestamp}.json"
+            filename = f"{data_dir}/batch_scrape_{timestamp}.json"
             
             batch_data = {
                 'scraped_at': datetime.now().isoformat(),
