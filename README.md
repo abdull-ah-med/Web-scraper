@@ -973,4 +973,3 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 ---
 
 **Built with my curiosity**
-n%20Ready-green?style=for-the-badge) 
