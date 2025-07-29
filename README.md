@@ -8,34 +8,34 @@ An intelligent, AI-powered web scraper designed to extract comprehensive univers
 ![Claude AI](https://img.shields.io/badge/Claude-API-orange.svg)
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
 
-## 🚀 Features
+## Features
 
-### 🧠 AI-Powered Data Extraction
+### AI-Powered Data Extraction
 - **Claude API Integration**: Intelligent extraction using Anthropic's Claude AI
 - **Structured Data**: Automatically extracts admission dates, criteria, fees, and scholarships
 - **Context-Aware**: Specialized prompts for Pakistani university websites
 - **Data Validation**: Comprehensive validation and cleaning of extracted data
 
-### 🔄 Advanced Anti-Detection System
+### Advanced Anti-Detection System
 - **Rotating Proxies**: Free proxy rotation with health monitoring
 - **Smart Delays**: Randomized request timing to avoid detection
 - **User-Agent Rotation**: Dynamic browser fingerprint simulation
 - **Session Management**: Automatic session refresh and cookie handling
 - **Cloudscraper Integration**: Advanced JavaScript challenge solving
 
-### 🏛️ Comprehensive API Backend
+### Comprehensive API Backend
 - **RESTful API**: Complete CRUD operations with Express.js
 - **Advanced Search**: Multi-parameter search across all data types
 - **Real-time Monitoring**: Live scraping status and system health
 - **Analytics Dashboard**: Detailed statistics and performance metrics
 
-### 📊 Database & Monitoring
+### Database & Monitoring
 - **MongoDB Integration**: Robust data model with relationships
 - **Winston Logging**: Structured logging with rotation
 - **Health Monitoring**: System metrics and alerts
 - **Performance Analytics**: Scraping success rates and data freshness
 
-## 🏗️ Architecture
+## Architecture
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
@@ -78,7 +78,7 @@ An intelligent, AI-powered web scraper designed to extract comprehensive univers
 - **Free Proxy Services** - Rotating proxy sources
 - **PM2** - Process management (Production)
 
-## 📦 Installation
+## Installation
 
 ### Prerequisites
 - **Python 3.8+**
@@ -164,7 +164,7 @@ curl http://localhost:3000/health
 curl http://localhost:3000/api
 ```
 
-## 📚 API Documentation
+## API Documentation
 
 ### Base URL
 ```
@@ -176,7 +176,7 @@ Currently, no authentication is required. For production, implement JWT authenti
 
 ---
 
-## 🏛️ Universities Endpoints
+## Universities Endpoints
 
 ### List All Universities
 ```http
@@ -272,7 +272,7 @@ DELETE /api/universities/:id
 
 ---
 
-## 🔍 Search Endpoints
+## Search Endpoints
 
 ### Search Universities
 ```http
@@ -352,7 +352,7 @@ GET /api/search/scholarships?renewable=true&university=LUMS&min_amount=50
 
 ---
 
-## 📊 Statistics & Analytics Endpoints
+## Statistics & Analytics Endpoints
 
 ### System Overview
 ```http
@@ -448,7 +448,7 @@ GET /api/universities/:id/scraping-history
 
 ---
 
-## 🎯 Example API Usage
+## Example API Usage
 
 ### Get All Universities with Data
 ```bash
@@ -477,7 +477,7 @@ curl "http://localhost:3000/health" | jq '.'
 
 ---
 
-## 📋 Response Format
+## Response Format
 
 All API responses follow this structure:
 
@@ -578,7 +578,7 @@ The system comes pre-configured with **12 major Pakistani universities**:
 }
 ```
 
-## 🔧 Configuration
+## Configuration
 
 ### Scraper Configuration (`scraper/config/settings.py`)
 
@@ -648,7 +648,7 @@ LOG_FILE=logs/app.log
 | **Hosting** | DigitalOcean 4GB Droplet | **$24** |
 | **Monitoring** | DataDog/New Relic | **$15-50** |
 
-## 🚀 Production Deployment
+## Production Deployment
 
 ### Option 1: DigitalOcean Droplet ($4-6/month)
 
@@ -866,7 +866,7 @@ GET /api/stats/data-freshness
 GET /api/scrape/active
 ```
 
-## 🛠️ Development
+## Development
 
 ### Project Structure
 ```
@@ -931,7 +931,7 @@ npm test
 npm run test:integration
 ```
 
-## 🔐 Security Considerations
+## Security Considerations
 
 ### Rate Limiting
 - API: 100 requests per 15 minutes per IP
@@ -950,7 +950,7 @@ npm run test:integration
 - Automatic retry mechanisms
 - Circuit breaker patterns
 
-## 🤝 Contributing
+## Contributing
 
 1. **Fork the repository**
 2. **Create feature branch**: `git checkout -b feature/amazing-feature`
