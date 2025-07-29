@@ -1,4 +1,5 @@
 import os
+import logging
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -93,9 +94,10 @@ class Settings:
     
     # Logging
     LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO')
-    LOG_FILE = os.getenv('LOG_FILE', 'logs/scraper.log')
+    LOG_FILE = os.getenv('LOG_FILE', '../logs/scraper.log')
     
     # Data extraction prompts for Claude API
+    CLAUDE_SYSTEM_PROMPT = """You are a data extraction expert. Your task is to analyze the provided HTML content from a university website and extract specific information based on the user's request. The output must be a single, valid, minified JSON array. Do not include any explanatory text, apologies, or markdown formatting. If no relevant information is found, return an empty JSON array []."""
     CLAUDE_PROMPTS = {
         'admission_dates': """
         You are extracting admission information from a Pakistani university webpage. 

@@ -306,7 +306,7 @@ class UniversityScraperEngine:
                 key=lambda u: (0 if any(k in u.lower() for k in ['admission', 'fee', 'tuition']) else 1, u)
             )
 
-            max_pages = 5  # tighter cap to reduce unnecessary Claude calls
+            max_pages = 10  # tighter cap to reduce unnecessary Claude calls
             self.logger.info(
                 f"Discovered {len(discovered_urls)} potentially relevant pages; scraping up to {max_pages}"
             )

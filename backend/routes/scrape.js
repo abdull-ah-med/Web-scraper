@@ -90,8 +90,8 @@ router.post('/university/:id', catchAsync(async (req, res, next) => {
     // Create custom university data for scraper
     const scraperArgs = ['--scrape-url', university.url];
     
-    // Start the scraping process
-    const pythonPath = process.env.PYTHON_PATH || 'python3';
+    // Start the scraping process - use absolute path to virtual environment python
+    const pythonPath = process.env.PYTHON_PATH || '/Volumes/Work/Web Scraper/scraper/.venv/bin/python';
     const scraperPath = path.join(__dirname, '../../scraper/main.py');
     
     const scrapingProcess = spawn(pythonPath, [scraperPath, ...scraperArgs], {

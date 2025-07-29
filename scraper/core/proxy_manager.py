@@ -55,6 +55,7 @@ class ProxyRotationManager:
         self.current_index = 0
         self.lock = threading.Lock()
         self.logger = self._setup_logger()
+        self._initialized = False
         
         # Configuration
         self.max_failures = 3
@@ -62,11 +63,17 @@ class ProxyRotationManager:
         self.proxy_timeout = 10
         self.min_success_rate = 60
         
-        # Initialize proxy list (only if proxies are enabled)
+        # Only log that we're ready to initialize proxies when needed
         if settings.USE_PROXIES:
-            self._load_proxies()
+            self.logger.info("Proxy manager initialized - proxies will be loaded when first needed")
         else:
-            self.logger.info("Proxy usage disabled – skipping proxy loading")
+            self.logger.info("Proxy usage disabled")
+    
+    def _ensure_initialized(self):
+        """Ensure proxies are loaded (lazy initialization)"""
+        if not self._initialized and settings.USE_PROXIES:
+            self._load_proxies()
+            self._initialized = True
         
     def _setup_logger(self) -> logging.Logger:
         """Setup logging for proxy manager"""
@@ -206,6 +213,8 @@ class ProxyRotationManager:
     
     def get_proxy(self) -> Optional[ProxyInfo]:
         """Get next working proxy with rotation"""
+        self._ensure_initialized()
+        
         with self.lock:
             if not self.working_proxies:
                 self.logger.warning("No working proxies available!")
@@ -305,10 +314,12 @@ class ProxyRotationManager:
     
     def __len__(self) -> int:
         """Return number of working proxies"""
+        self._ensure_initialized()
         return len(self.working_proxies)
     
     def __bool__(self) -> bool:
         """Return True if there are working proxies"""
+        self._ensure_initialized()
         return len(self.working_proxies) > 0
 
 # Global proxy manager instance

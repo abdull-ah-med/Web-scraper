@@ -12,6 +12,7 @@ import logging
 from typing import List, Dict, Any
 from datetime import datetime
 import asyncio
+from pymongo import MongoClient
 
 # Add the scraper directory to Python path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -36,6 +37,7 @@ class UniversityScraperManager:
     def __init__(self):
         self.logger = self._setup_logger()
         self.scraped_data = []
+        self.db_client = self._setup_database_client()
         
     def _setup_logger(self) -> logging.Logger:
         """Setup main logger"""
@@ -52,7 +54,62 @@ class UniversityScraperManager:
         )
         
         return logging.getLogger('ScraperManager')
-    
+
+    def _setup_database_client(self) -> MongoClient:
+        """Setup MongoDB client"""
+        try:
+            client = MongoClient(settings.MONGODB_URI, serverSelectionTimeoutMS=5000)
+            client.server_info() # Will raise an exception if connection fails
+            self.logger.info("MongoDB connection successful.")
+            return client
+        except Exception as e:
+            self.logger.error(f"Failed to connect to MongoDB: {e}")
+            return None
+
+    def _save_to_mongodb(self, result: Dict[str, Any]):
+        """Save scraping result to MongoDB"""
+        if not self.db_client:
+            self.logger.error("Cannot save to MongoDB, client not available.")
+            return
+
+        try:
+            db = self.db_client.get_database()
+            universities = db.universities
+
+            university_name = result.get('university_name')
+            if not university_name:
+                self.logger.error("Scraped result missing university name, cannot save.")
+                return
+
+            update_data = {
+                '$set': {
+                    'data': result.get('data'),
+                    'scraping_status': result.get('scraping_status'),
+                    'last_scraped': datetime.fromisoformat(result.get('scraped_at')),
+                    'data_last_updated': {
+                        'admission_dates': datetime.now() if result.get('data', {}).get('admission_dates') else None,
+                        'criteria': datetime.now() if result.get('data', {}).get('criteria') else None,
+                        'fee_structure': datetime.now() if result.get('data', {}).get('fee_structure') else None,
+                        'scholarships': datetime.now() if result.get('data', {}).get('scholarships') else None,
+                    }
+                },
+                '$push': {
+                    'scraping_history': {
+                        'timestamp': datetime.now(),
+                        'status': result.get('scraping_status'),
+                        'pages_scraped': result.get('pages_scraped'),
+                        'error_message': result.get('error_message')
+                    }
+                }
+            }
+            
+            # Use the university name to find the document to update
+            universities.update_one({'name': university_name}, update_data)
+            self.logger.info(f"Successfully updated data for {university_name} in MongoDB.")
+
+        except Exception as e:
+            self.logger.error(f"Error saving to MongoDB for {university_name}: {e}")
+
     def validate_environment(self) -> bool:
         """Validate that all required environment variables and dependencies are set"""
         errors = []
@@ -62,9 +119,9 @@ class UniversityScraperManager:
             errors.append("CLAUDE_API_KEY environment variable not set")
         
         # Check MongoDB URI
-        if not settings.MONGODB_URI or settings.MONGODB_URI == 'mongodb://localhost:27017/university_scraper':
-            self.logger.warning("Using default MongoDB URI - make sure MongoDB is running locally")
-        
+        if not self.db_client:
+            errors.append("MongoDB connection failed.")
+
         # Test proxy manager
         if settings.USE_PROXIES:
             if not proxy_manager:
@@ -88,8 +145,9 @@ class UniversityScraperManager:
             result = scraper_engine.scrape_university(university_data)
             self.scraped_data.append(result)
             
-            # Save individual result
+            # Save individual result to file and MongoDB
             self._save_result_to_file(result)
+            self._save_to_mongodb(result)
             
             return result
             

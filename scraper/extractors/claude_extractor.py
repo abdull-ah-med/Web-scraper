@@ -94,6 +94,7 @@ class ClaudeDataExtractor:
                     model="claude-3-7-sonnet-20250219",
                     max_tokens=self.max_tokens,
                     temperature=0.1,  # Low temperature for consistent structured output
+                    system=settings.CLAUDE_SYSTEM_PROMPT,
                     messages=[
                         {
                             "role": "user",
@@ -138,20 +139,27 @@ class ClaudeDataExtractor:
             # Log raw response for debugging
             if settings.LOG_LEVEL.upper() == 'DEBUG':
                 self.logger.debug(f"Raw Claude response for {data_type}: {response[:500]}...")
+
+            # Use regex to find the JSON array. This is more robust than start/end string finding.
+            json_match = re.search(r'\s*(\[.*?\])\s*', response, re.DOTALL)
             
-            # Clean up common JSON formatting issues
+            if json_match:
+                json_str = json_match.group(1)
+                parsed_data = json.loads(json_str)
+                
+                if isinstance(parsed_data, list):
+                    self.logger.info(f"Successfully parsed {len(parsed_data)} {data_type} items using regex.")
+                    return parsed_data
+
+            # Fallback to original method if regex fails
+            self.logger.warning(f"Regex parsing failed for {data_type}, falling back to manual cleaning.")
             cleaned_response = response.strip()
-            
-            # Remove markdown code blocks if present
             if cleaned_response.startswith('```json'):
                 cleaned_response = cleaned_response[7:]
             if cleaned_response.endswith('```'):
                 cleaned_response = cleaned_response[:-3]
-            
-            # Remove extra whitespace and newlines
             cleaned_response = cleaned_response.strip()
             
-            # Try to find JSON array in the response
             start_idx = cleaned_response.find('[')
             end_idx = cleaned_response.rfind(']')
             
@@ -160,26 +168,24 @@ class ClaudeDataExtractor:
                 parsed_data = json.loads(json_str)
                 
                 if isinstance(parsed_data, list):
-                    self.logger.info(f"Successfully parsed {len(parsed_data)} {data_type} items")
+                    self.logger.info(f"Successfully parsed {len(parsed_data)} {data_type} items with fallback.")
                     return parsed_data
             
-            # If no valid JSON array found, try parsing the whole response
-            parsed_data = json.loads(cleaned_response)
-            if isinstance(parsed_data, list):
-                return parsed_data
-            elif isinstance(parsed_data, dict):
-                return [parsed_data]  # Wrap single item in list
-            else:
-                self.logger.warning(f"Unexpected JSON structure for {data_type}: {type(parsed_data)}")
-                return []
+            # If still no valid JSON, log an error
+            self.logger.error(f"Could not find a valid JSON array for {data_type}.")
+            return []
                 
         except json.JSONDecodeError as e:
             self.logger.error(f"JSON parsing error for {data_type}: {e}")
             self.logger.error(f"Raw response that failed to parse: {response[:1000]}")
             
             # Save failed response for debugging
-            with open(f"logs/failed_claude_response_{data_type}.txt", "w") as f:
-                f.write(f"Error: {e}\n\nRaw response:\n{response}")
+            failed_log_path = f"../logs/failed_claude_response_{data_type}.txt"
+            try:
+                with open(failed_log_path, "w") as f:
+                    f.write(f"Error: {e}\n\nRaw response:\n{response}")
+            except Exception as log_error:
+                self.logger.error(f"Could not save failed response log: {log_error}")
             
             return []
         except Exception as e:
