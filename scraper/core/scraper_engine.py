@@ -240,14 +240,35 @@ class UniversityScraperEngine:
         self.logger.info(f"Discovering pages for {base_url}")
         
         # Keywords to look for in links
+        # We want to strictly target pages that are likely to contain admission or fee data.
+        # The following whitelist is intentionally narrow; many generic keywords like "news" or
+        # "events" are explicitly excluded further below to avoid scraping irrelevant content.
         relevant_keywords = [
-            'admission', 'admissions', 'apply', 'application',
-            'fee', 'fees', 'tuition', 'cost', 'finance',
-            'scholarship', 'scholarships', 'financial-aid',
-            'program', 'programs', 'course', 'courses',
-            'undergraduate', 'graduate', 'postgraduate',
-            'requirements', 'criteria', 'eligibility'
+            # Admission-related
+            'admission', 'admissions', 'apply', 'application', 'eligibility', 'requirements', 'criteria',
+            # Financial-related
+            'fee', 'fees', 'tuition', 'cost', 'finance', 'scholarship', 'scholarships', 'financial-aid',
+            # Program pages often include fee/admission info but can be broad – keep but at lower priority
+            'program', 'programs', 'undergraduate', 'graduate', 'postgraduate'
         ]
+
+        # Exclude obvious non-relevant sections even if they contain a relevant keyword by coincidence
+        excluded_keywords = [
+            'event', 'events', 'news', 'story', 'stories', 'blog', 'press', 'calendar',
+            'research', 'gallery', 'video', 'contact', 'about', 'faculty', 'career',
+            'job', 'jobs', 'alumni', 'login', 'signup', 'profile'
+        ]
+
+        def is_relevant(href: str, text: str) -> bool:
+            href_l = href.lower()
+            text_l = text.lower()
+
+            # If it contains an excluded keyword, skip immediately
+            if any(bad in href_l or bad in text_l for bad in excluded_keywords):
+                return False
+
+            # Must contain at least one whitelist keyword
+            return any(good in href_l or good in text_l for good in relevant_keywords)
         
         discovered_urls = set([base_url])
         
@@ -263,19 +284,33 @@ class UniversityScraperEngine:
             links = soup.find_all('a', href=True)
             
             for link in links:
-                href = link.get('href', '').lower()
-                text = link.get_text().lower()
-                
-                # Check if link is relevant
-                if any(keyword in href or keyword in text for keyword in relevant_keywords):
-                    full_url = urljoin(base_url, link['href'])
-                    
-                    # Ensure it's from the same domain
+                raw_href = link.get('href', '')
+                href = raw_href.lower()
+                text = link.get_text(strip=True)
+
+                if not raw_href:
+                    continue
+
+                # Only proceed if deemed relevant by our helper
+                if is_relevant(href, text):
+                    full_url = urljoin(base_url, raw_href)
+
+                    # Keep same-domain links only
                     if urlparse(full_url).netloc == urlparse(base_url).netloc:
                         discovered_urls.add(full_url)
             
-            self.logger.info(f"Discovered {len(discovered_urls)} relevant pages")
-            return list(discovered_urls)[:10]  # Limit to 10 pages
+            # Sort by heuristic relevance: URLs with direct keyword matches earlier in the list.
+            # We keep ordering stable for reproducibility.
+            sorted_urls = sorted(
+                discovered_urls,
+                key=lambda u: (0 if any(k in u.lower() for k in ['admission', 'fee', 'tuition']) else 1, u)
+            )
+
+            max_pages = 5  # tighter cap to reduce unnecessary Claude calls
+            self.logger.info(
+                f"Discovered {len(discovered_urls)} potentially relevant pages; scraping up to {max_pages}"
+            )
+            return sorted_urls[:max_pages]
             
         except Exception as e:
             self.logger.error(f"Error discovering pages for {base_url}: {e}")

@@ -4,7 +4,7 @@ import time
 from typing import Dict, List, Optional, Any
 from datetime import datetime
 import re
-from anthropic import Anthropic, APIError, RateLimitError
+from anthropic import Anthropic, APIError, RateLimitError, HUMAN_PROMPT, AI_PROMPT
 
 from config.settings import settings
 
@@ -74,7 +74,8 @@ class ClaudeDataExtractor:
     def _make_claude_request(self, prompt: str, html_content: str) -> Optional[str]:
         """Make a request to Claude API with error handling and retries"""
         cleaned_html = self._clean_html_content(html_content)
-        full_prompt = prompt.format(html_content=cleaned_html)
+        # Use string replacement instead of .format() to avoid conflicts with curly braces in HTML
+        full_prompt = prompt.replace('{html_content}', cleaned_html)
         
         # Debug logging
         if settings.LOG_LEVEL.upper() == 'DEBUG':
@@ -89,20 +90,24 @@ class ClaudeDataExtractor:
                 if settings.LOG_LEVEL.upper() == 'DEBUG':
                     self.logger.debug(f"Attempt {attempt + 1}: Calling Claude API...")
                 
-                # Use completions API for anthropic 0.7.8
-                response = self.client.completions.create(
-                    model="claude-v1",
-                    prompt=f"{self.client.HUMAN_PROMPT} {full_prompt} {self.client.AI_PROMPT}",
-                    max_tokens_to_sample=self.max_tokens,
+                response = self.client.messages.create(
+                    model="claude-3-7-sonnet-20250219",
+                    max_tokens=self.max_tokens,
                     temperature=0.1,  # Low temperature for consistent structured output
+                    messages=[
+                        {
+                            "role": "user",
+                            "content": full_prompt
+                        }
+                    ]
                 )
-                
+                # Newer SDKs return a Message object whose `content` is a list of content blocks.
+                # We expect the first block to contain the assistant text.
+                return response.content[0].text
                 # Debug log after API call
                 if settings.LOG_LEVEL.upper() == 'DEBUG':
-                    self.logger.debug(f"Claude API response received, length: {len(response.completion) if response.completion else 0}")
-                
-                return response.completion
-                
+                    self.logger.debug(f"Claude API response received, length: {len(response.content[0].text) if response.content else 0}")
+ 
             except RateLimitError as e:
                 self.logger.warning(f"Rate limit hit, waiting {self.retry_delay * (attempt + 1)} seconds...")
                 time.sleep(self.retry_delay * (attempt + 1))
@@ -371,6 +376,9 @@ class ClaudeDataExtractor:
             
         except Exception as e:
             self.logger.error(f"Error during comprehensive extraction for {url}: {e}")
+            # Log full traceback for debugging
+            import traceback
+            self.logger.error(f"Full traceback: {traceback.format_exc()}")
         
         return results
     
