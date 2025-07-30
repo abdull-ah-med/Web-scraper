@@ -80,6 +80,30 @@ class Settings:
             'url': 'https://www.gcu.edu.pk',
             'city': 'Lahore',
             'type': 'public'
+        },
+        {
+            'name': 'University of Engineering and Technology Lahore',
+            'url': 'https://www.uet.edu.pk',
+            'city': 'Lahore',
+            'type': 'public'
+        },
+        {
+            'name': 'Aga Khan University',
+            'url': 'https://www.aku.edu',
+            'city': 'Karachi',
+            'type': 'private'
+        },
+        {
+            'name': 'Bahria University',
+            'url': 'https://www.bahria.edu.pk',
+            'city': 'Islamabad',
+            'type': 'private'
+        },
+        {
+            'name': 'COMSATS University Islamabad',
+            'url': 'https://www.comsats.edu.pk',
+            'city': 'Islamabad',
+            'type': 'public'
         }
     ]
     

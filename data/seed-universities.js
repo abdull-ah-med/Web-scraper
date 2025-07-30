@@ -174,7 +174,7 @@ const PAKISTANI_UNIVERSITIES = [
   },
   {
     name: 'University of Engineering and Technology Lahore',
-    url: 'https://www.uet.edu.pk',
+    url: 'https://www    python main.py --scrape-single "UET".uet.edu.pk',
     city: 'Lahore',
     type: 'public',
     description: 'UET Lahore is a public university focusing on engineering and technology education.',
